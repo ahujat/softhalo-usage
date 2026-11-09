@@ -36,7 +36,7 @@ Each session is written to two files, `claude/claude-<session id>.a.json` and `.
 ## Install
 
 ```bash
-claude plugin marketplace add softhalo/softhalo-usage
+claude plugin marketplace add ahujat/softhalo-usage
 claude plugin install softhalo-usage@softhalo
 ```
 
