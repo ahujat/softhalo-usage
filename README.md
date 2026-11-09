@@ -40,6 +40,10 @@ It reads only: its own two files (to continue after a restart), `…/usage/ack/c
 - No commands, panels, notifications or changes to Claude's behaviour.
 - No reading of your conversation or your project's files.
 
+## Status and plans
+
+This is the first release (MVP) of SoftHalo's usage collection, and Claude Code is the first tool it covers. Collectors for **Codex**, **OpenClaw** and **Hermes** are planned, so that SoftHalo can show the quotas and token usage of all your AI coding tools together in one overlay rather than one tool at a time. Each will be a separate add-on for its own tool, writing to the same local folder in the same way; this plugin stays Claude Code only. There are no dates yet.
+
 ## Install
 
 ```bash
