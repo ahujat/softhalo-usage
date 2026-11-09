@@ -1,0 +1,13 @@
+{
+  "name": "softhalo",
+  "description": "SoftHalo plugins: usage and quota collection for the SoftHalo desktop app.",
+  "owner": {
+    "name": "SoftHalo"
+  },
+  "plugins": [
+    {
+      "name": "softhalo-usage",
+      "source": "./"
+    }
+  ]
+}
