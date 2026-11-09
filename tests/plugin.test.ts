@@ -109,3 +109,29 @@ test('after a reload the plugin continues the same generation and skips a repeat
   expect(b.buckets[0].requests).toBe(2)
   expect(b.buckets[0].output).toBe(80)
 })
+
+test('the plugin never makes a network request', async ($, on) => {
+  const files = new Map<string, string>()
+  const clock = world(on, files)
+  // Any network use by the plugin would come through the engine's http.fetch: fail if it is ever called.
+  let fetches = 0
+  on('http.fetch', () => {
+    fetches += 1
+    throw new Error('network use is not allowed')
+  })
+
+  await $.session.start({ cwd: '/', surface: null, isInteractive: false })
+  await runStep($ as never, 't1', 0)
+  await runStep($ as never, 't1', 1)
+  await $.session.measure({
+    context: { window: 200000 } as never,
+    rateLimits: [{ kind: 'five_hour', percentUsed: 12, resetsAt: '2026-11-07T13:00:00Z' }],
+    cost: { usd: 0.25 },
+    changed: ['rateLimits', 'cost'],
+  } as never)
+  await clock.advance(10_000)
+  await $.session.end({ sessionId: 's1', reason: 'other', resume: { sessionId: 's1' } as never })
+
+  expect(fetches).toBe(0)
+  expect(files.size).toBeGreaterThan(0)
+})
