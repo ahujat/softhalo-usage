@@ -4,7 +4,7 @@
 
 ## Requirements
 
-- **Windows**, with **Soft Halo for Windows** (a version with AI usage). Without it, the plugin only writes small files that nothing reads.
+- **Windows** (Claude Code on Windows itself or in WSL), with **Soft Halo for Windows** (a version with AI usage). Without it, the plugin only writes small files that nothing reads.
 
 Soft Halo with AI usage (2.0.5) is in beta. To try it now, see [REVIEWING.md](REVIEWING.md) for the signed beta build and setup steps.
 
@@ -30,9 +30,13 @@ The hooks module writes **only** these two files per Claude Code session, and no
 - The two files alternate, so a crash mid-write never damages the newest copy. Each holds the session's usage in the `softhalo.claude-snapshot/3` format: token counts, plan-limit percentages, Claude Code's cost estimate, the session id and a one-way hash of the configuration folder. They are rewritten at most every 5 to 10 seconds while you work, and once more when the session ends.
 - It **never** creates, edits or deletes build files, start-up or autostart entries, shell profiles, settings files (including Claude Code's), instructions files such as `CLAUDE.md`, or any file in your projects.
 
-It reads only: its own two files (to continue after a restart), `…/usage/ack/claude-<session id>.json` (written by Soft Halo to confirm what it has saved, before the plugin trims days older than 35 days), and, only where `LOCALAPPDATA` is not set, whether `~/Library/Application Support` exists.
+It reads only: its own two files (to continue after a restart), `…/usage/ack/claude-<session id>.json` (written by Soft Halo to confirm what it has saved, before the plugin trims days older than 35 days), and, only where `LOCALAPPDATA` is not set, whether `~/Library/Application Support` exists. Inside WSL it also lists the user folders under `/mnt/c/Users` to find the one with a Soft Halo folder (see below).
 
-Only Windows is supported. The code also picks a local folder when it runs on another system (`~/Library/Application Support/Softhalo/usage` on macOS, `$XDG_STATE_HOME/softhalo/usage` or `~/.local/state/softhalo/usage` elsewhere) so it never writes anywhere unexpected, but no Soft Halo app reads those folders.
+### In WSL
+
+When Claude Code runs inside WSL on the same Windows PC, the plugin writes to the same Windows folder, through the C: drive mount: `/mnt/c/Users/<Windows user>/AppData/Local/Softhalo/usage/`. It finds the Windows user by looking for an `AppData/Local/Softhalo` folder under `/mnt/c/Users`. If exactly one user has one, it uses that. If several do, it uses the one whose name matches your Linux user name. If it finds none, it writes nothing. If your C: drive is mounted elsewhere, or the names differ, set `SOFTHALO_USAGE_DIR` to the folder, for example `/mnt/c/Users/Ann/AppData/Local/Softhalo/usage`. `SOFTHALO_USAGE_DIR` also overrides the folder on Windows.
+
+Apart from WSL, only Windows is supported. The code also picks a local folder when it runs on another system (`~/Library/Application Support/Softhalo/usage` on macOS, `$XDG_STATE_HOME/softhalo/usage` or `~/.local/state/softhalo/usage` on other Linux systems) so it never writes anywhere unexpected, but no Soft Halo app reads those folders.
 
 ## What it does not do
 

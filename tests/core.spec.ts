@@ -13,6 +13,8 @@ import {
   restore,
   touch,
   usageRoot,
+  isWsl,
+  wslUsageRoot,
   type Ack,
   type SessionState,
   type Snapshot,
@@ -242,6 +244,17 @@ test('the usage folder follows each system\'s convention', () => {
   assert.equal(usageRoot({ HOME: '/home/u', XDG_STATE_HOME: '/home/u/.state' }, false), '/home/u/.state/softhalo/usage')
   assert.equal(usageRoot({ HOME: '/home/u', XDG_STATE_HOME: 'relative' }, false), '/home/u/.local/state/softhalo/usage')
   assert.equal(usageRoot({}, false), null)
+})
+
+test('inside WSL the Windows user with a Soft Halo folder is found', () => {
+  assert.equal(isWsl({ WSL_DISTRO_NAME: 'Ubuntu' }), true)
+  assert.equal(isWsl({}), false)
+  const users = '/mnt/c/Users/'
+  assert.equal(wslUsageRoot(users, ['Tarun', 'Public'], 'tarun-linux'), '/mnt/c/Users/Tarun/AppData/Local/Softhalo/usage')
+  assert.equal(wslUsageRoot(users, ['Tarun', 'Ann'], 'ann'), '/mnt/c/Users/Ann/AppData/Local/Softhalo/usage')
+  assert.equal(wslUsageRoot(users, ['Tarun', 'Ann'], 'bob'), null)
+  assert.equal(wslUsageRoot(users, ['Default'], 'u'), null)
+  assert.equal(wslUsageRoot(users, [], 'u'), null)
 })
 
 test('the profile id is stable, opaque and ignores separators and case', async () => {

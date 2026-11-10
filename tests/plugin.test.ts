@@ -6,11 +6,14 @@ const ROOT = 'C:/Users/u/AppData/Local/Softhalo/usage'
 /** profileId('C:/Users/u/.claude'), as core.ts computes it. */
 const PROFILE = 'cfg-3a6371468ecbf7c36c1a'
 
-function world(on: Parameters<Parameters<typeof test>[1]>[1], files: Map<string, string>, sessionId = { value: 's1' }) {
-  mock.env(on, { LOCALAPPDATA: 'C:/Users/u/AppData/Local', USERPROFILE: 'C:/Users/u' })
+const WINDOWS_ENV: Record<string, string> = { LOCALAPPDATA: 'C:/Users/u/AppData/Local', USERPROFILE: 'C:/Users/u' }
+
+function world(on: Parameters<Parameters<typeof test>[1]>[1], files: Map<string, string>, sessionId = { value: 's1' }, env = WINDOWS_ENV) {
+  mock.env(on, env)
   const clock = mock.clock(on, { now: Date.parse('2026-11-07T10:00:00Z') })
   // The engine hands paths over in the system's own spelling.
-  const key = (path: string) => path.split('\\').join('/')
+  // Running these tests on Windows, the engine resolves a Linux path like /mnt/c against the current drive.
+  const key = (path: string) => path.split('\\').join('/').replace(/^[A-Za-z]:(?=\/(mnt|home)\/)/, '')
   on('fs.read', (_, e) => {
     const text = files.get(key(e.path))
     if (text === undefined) throw new Error('ENOENT')
@@ -20,7 +23,12 @@ function world(on: Parameters<Parameters<typeof test>[1]>[1], files: Map<string,
     files.set(key(e.path), e.text)
     return { value: undefined }
   })
-  on('fs.exists', (_, e) => ({ value: files.has(key(e.path)) }))
+  on('fs.exists', (_, e) => ({ value: files.has(key(e.path)) || [...files.keys()].some(f => f.startsWith(`${key(e.path)}/`)) }))
+  on('fs.list', (_, e) => {
+    const dir = `${key(e.path ?? '')}/`
+    const names = new Set([...files.keys()].filter(f => f.startsWith(dir)).map(f => f.slice(dir.length).split('/')[0]))
+    return { value: [...names].map(name => ({ name, kind: files.has(dir + name) ? 'file' : 'dir', size: 0, mtimeMs: 0, isLink: false })) as never }
+  })
   on('session.id', () => ({ value: sessionId.value }))
   on('session.usage', () => ({ value: { startedAt: clock.now() - 1000, rateLimits: [] } }))
   on('session.start', (_, e) => ({ cwd: e.cwd }))
@@ -134,4 +142,40 @@ test('the plugin never makes a network request', async ($, on) => {
 
   expect(fetches).toBe(0)
   expect(files.size).toBeGreaterThan(0)
+})
+
+/** Claude Code inside WSL: a Linux home, and the Windows drive mounted at /mnt/c. */
+const WSL_ENV: Record<string, string> = { HOME: '/home/u', USER: 'u', WSL_DISTRO_NAME: 'Ubuntu' }
+
+test('inside WSL the plugin writes to the Soft Halo folder of the Windows user', async ($, on) => {
+  const files = new Map<string, string>([
+    ['/mnt/c/Users/Tarun/AppData/Local/Softhalo/settings.json', '{}'],
+    ['/mnt/c/Users/Public/AppData/Local/Softhalo/x', ''],
+    ['/mnt/c/Users/Other/AppData/Local/Temp/x', ''],
+  ])
+  const clock = world(on, files, { value: 's1' }, WSL_ENV)
+  await $.session.start({ cwd: '/', surface: null, isInteractive: false })
+  await runStep($ as never, 't1', 0)
+  await clock.advance(5_000)
+  const a = JSON.parse(files.get('/mnt/c/Users/Tarun/AppData/Local/Softhalo/usage/claude/claude-s1.a.json') ?? '{}')
+  expect(a.buckets[0].output).toBe(40)
+  expect([...files.keys()].some(f => f.startsWith('/home/'))).toBe(false)
+})
+
+test('inside WSL without Soft Halo on Windows nothing is written', async ($, on) => {
+  const files = new Map<string, string>([['/mnt/c/Users/Tarun/AppData/Local/Temp/x', '']])
+  const clock = world(on, files, { value: 's1' }, WSL_ENV)
+  await $.session.start({ cwd: '/', surface: null, isInteractive: false })
+  await runStep($ as never, 't1', 0)
+  await clock.advance(10_000)
+  expect(files.size).toBe(1)
+})
+
+test('SOFTHALO_USAGE_DIR names the folder on any system', async ($, on) => {
+  const files = new Map<string, string>()
+  const clock = world(on, files, { value: 's1' }, { ...WSL_ENV, SOFTHALO_USAGE_DIR: '/mnt/d/Users/t/AppData/Local/Softhalo/usage/' })
+  await $.session.start({ cwd: '/', surface: null, isInteractive: false })
+  await runStep($ as never, 't1', 0)
+  await clock.advance(5_000)
+  expect(files.has('/mnt/d/Users/t/AppData/Local/Softhalo/usage/claude/claude-s1.a.json')).toBe(true)
 })

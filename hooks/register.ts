@@ -7,6 +7,7 @@ import {
   applyStep,
   ackPath,
   isSafeSessionId,
+  isWsl,
   newSession,
   parseAck,
   prepareWrite,
@@ -15,8 +16,12 @@ import {
   slotPath,
   touch,
   usageRoot,
+  wslUsageRoot,
   type SessionState,
 } from './core.ts'
+
+/** WSL mounts the Windows C: drive here unless /etc/wsl.conf moves it; SOFTHALO_USAGE_DIR covers that case. */
+const WSL_WINDOWS_DRIVE = '/mnt/c'
 
 export const PLUGIN_VERSION = '1.0.0'
 /** Wait this long after the last change before writing... */
@@ -46,6 +51,22 @@ async function readOrNull($: EngineInterface, path: string): Promise<string | nu
   }
 }
 
+/** Inside WSL, Soft Halo's folder on the Windows side, through the C: drive mount. */
+async function findWslRoot($: EngineInterface, linuxUser: string | undefined): Promise<string | null> {
+  const usersDir = `${WSL_WINDOWS_DRIVE}/Users`
+  try {
+    const entries = await $.fs.list(usersDir)
+    const withSofthalo: string[] = []
+    for (const entry of entries) {
+      if (entry.kind !== 'dir') continue
+      if (await $.fs.exists(`${usersDir}/${entry.name}/AppData/Local/Softhalo`).catch(() => false)) withSofthalo.push(entry.name)
+    }
+    return wslUsageRoot(usersDir, withSofthalo, linuxUser)
+  } catch {
+    return null
+  }
+}
+
 async function setup($: EngineInterface, w: Writer): Promise<boolean> {
   if (w.root === undefined) {
     const env = {
@@ -55,9 +76,17 @@ async function setup($: EngineInterface, w: Writer): Promise<boolean> {
       XDG_STATE_HOME: await $.env.get('XDG_STATE_HOME'),
     }
     const home = env.HOME ?? env.USERPROFILE
-    const hasMacLibrary =
-      !env.LOCALAPPDATA && !!home && (await $.fs.exists(`${home}/Library/Application Support`).catch(() => false))
-    w.root = usageRoot(env, hasMacLibrary)
+    const override = await $.env.get('SOFTHALO_USAGE_DIR')
+    const wsl = isWsl({ WSL_DISTRO_NAME: await $.env.get('WSL_DISTRO_NAME'), WSL_INTEROP: await $.env.get('WSL_INTEROP') })
+    if (override) {
+      w.root = override.replace(/[\\/]+$/, '')
+    } else if (wsl && !env.LOCALAPPDATA) {
+      w.root = await findWslRoot($, await $.env.get('USER'))
+    } else {
+      const hasMacLibrary =
+        !env.LOCALAPPDATA && !!home && (await $.fs.exists(`${home}/Library/Application Support`).catch(() => false))
+      w.root = usageRoot(env, hasMacLibrary)
+    }
     const configDir = (await $.env.get('CLAUDE_CONFIG_DIR')) ?? (home ? `${home}/.claude` : 'default')
     w.profile = await profileId(configDir)
   }

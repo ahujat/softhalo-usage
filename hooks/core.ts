@@ -537,6 +537,27 @@ export function usageRoot(env: UsageEnv, hasMacLibrary: boolean): string | null 
   return null
 }
 
+/** Windows profile folders that are never a person's. */
+const NOT_A_USER = new Set(['all users', 'default', 'default user', 'public', 'desktop.ini'])
+
+/** True inside WSL, where Soft Halo itself runs on the Windows side. */
+export function isWsl(env: { WSL_DISTRO_NAME?: string; WSL_INTEROP?: string }): boolean {
+  return !!(env.WSL_DISTRO_NAME || env.WSL_INTEROP)
+}
+
+/**
+ * Inside WSL: the Windows user whose `AppData\Local\Softhalo` folder exists, seen through
+ * the Windows drive mount. `withSofthalo` lists the user folders under `<mount>/Users` that have
+ * one. One such user is the answer; with several, the one named like the Linux user; otherwise
+ * null, and nothing is written (SOFTHALO_USAGE_DIR then says where).
+ */
+export function wslUsageRoot(usersDir: string, withSofthalo: string[], linuxUser: string | undefined): string | null {
+  const people = withSofthalo.filter(name => !NOT_A_USER.has(name.toLowerCase()))
+  const pick =
+    people.length === 1 ? people[0] : people.find(name => !!linuxUser && name.toLowerCase() === linuxUser.toLowerCase())
+  return pick ? `${usersDir.replace(/\/+$/, '')}/${pick}/AppData/Local/Softhalo/usage` : null
+}
+
 export const slotPath = (root: string, sessionId: string, slot: Slot) => `${root}/claude/claude-${sessionId}.${slot}.json`
 export const ackPath = (root: string, sessionId: string) => `${root}/ack/claude-${sessionId}.json`
 
