@@ -28,4 +28,4 @@ The plugin is not directed at children under 18.
 
 ## Contact
 
-Questions about privacy: open an issue at the plugin's GitHub repository.
+Questions about privacy: email privacy@softhalo.app.
