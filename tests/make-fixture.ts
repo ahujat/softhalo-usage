@@ -1,5 +1,5 @@
 // Writes the snapshots this plugin produces for one scripted session into a
-// SoftHalo fixture scenario, so SoftHalo's collector tests read the plugin's
+// Soft Halo fixture scenario, so Soft Halo's collector tests read the plugin's
 // real output. The expected totals in that scenario are written by hand.
 //
 // Run: node tests/make-fixture.ts <path to Fixtures/AiUsage/plugin-output>

@@ -1,9 +1,9 @@
 {
   "name": "softhalo-usage",
-  "displayName": "SoftHalo Usage",
+  "displayName": "Soft Halo Usage",
   "version": "1.0.0",
-  "description": "Keeps your Claude Code quota and token usage always on screen: records usage numbers to a local folder for the SoftHalo desktop app.",
-  "author": { "name": "SoftHalo" },
+  "description": "Keeps your Claude Code quota and token usage always on screen: records usage numbers to a local folder for the Soft Halo desktop app.",
+  "author": { "name": "Soft Halo" },
   "license": "MIT",
   "icon": "./.claude-plugin/icon.png",
   "keywords": ["usage", "tokens", "quota", "rate-limits", "softhalo"]

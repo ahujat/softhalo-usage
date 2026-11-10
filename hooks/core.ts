@@ -1,11 +1,11 @@
 // Pure snapshot logic for the softhalo.claude-snapshot/3 format: no `$`, no
 // I/O, so it runs the same under the engine and under `node --test`.
 //
-// The contract lives in "SoftHalo usage collection: spec" and the JSON
-// Schemas beside SoftHalo's fixtures. In short: one session is written to two
+// The contract lives in "Soft Halo usage collection: spec" and the JSON
+// Schemas beside Soft Halo's fixtures. In short: one session is written to two
 // alternating slots; each version carries the session's cumulative buckets,
 // a writer generation and a sequence number; buckets are trimmed only after
-// SoftHalo has acknowledged them.
+// Soft Halo has acknowledged them.
 
 export const FORMAT = 'softhalo.claude-snapshot/3'
 export const ACK_FORMAT = 'softhalo.ack/1'
@@ -159,7 +159,7 @@ export function daysBetween(from: string, to: string): number {
   return Math.round((Date.parse(`${to}T00:00:00Z`) - Date.parse(`${from}T00:00:00Z`)) / 86_400_000)
 }
 
-/** The company that made the model, which is what SoftHalo groups by. */
+/** The company that made the model, which is what Soft Halo groups by. */
 export function providerOf(model: string): string {
   return /claude|anthropic/i.test(model) ? 'anthropic' : 'unknown'
 }
@@ -241,7 +241,7 @@ export function applyStep(state: SessionState, step: Step): boolean {
   }
 
   // Requests with and without usage in one bucket make its counters known
-  // partial sums: SoftHalo must show "at least", not an exact total.
+  // partial sums: Soft Halo must show "at least", not an exact total.
   const hadUsage = bucket.requests - bucket.requests_without_usage > 0
   const hadNoUsage = bucket.requests_without_usage > 0
   if ((step.usage === null && hadUsage) || (step.usage !== null && hadNoUsage)) bucket.incomplete = [...SUMMABLE]
@@ -316,7 +316,7 @@ export function applyMeasure(
   return isChanged
 }
 
-/** Whether SoftHalo has acknowledged a bucket and it is old enough to drop. */
+/** Whether Soft Halo has acknowledged a bucket and it is old enough to drop. */
 export function canPrune(ack: Ack | null, state: SessionState, bucket: Bucket, today: string): boolean {
   if (!ack || ack.format !== ACK_FORMAT) return false
   if (ack.app !== APP || ack.profile !== state.profile || ack.session_id !== state.sessionId) return false
@@ -417,7 +417,7 @@ export function prepareWrite(
 
   let text = render()
   // Near the reader's size limit: drop the oldest day, acknowledged or not, and
-  // say so in unacked_pruned so SoftHalo shows the gap.
+  // say so in unacked_pruned so Soft Halo shows the gap.
   while (new TextEncoder().encode(text).length > SOFT_MAX_BYTES && buckets.length > 1) {
     const oldest = buckets.reduce((min, b) => (b.day < min ? b.day : min), buckets[0].day)
     buckets = buckets.filter(b => b.day !== oldest)
@@ -474,7 +474,7 @@ export function parseSlot(text: string | null, sessionId: string): Snapshot | 'i
 /**
  * Restores a session from its two slots, continuing the same generation.
  * Returns null when there is nothing to restore, or when a slot is damaged:
- * the damaged one might be a newer version SoftHalo already read, so
+ * the damaged one might be a newer version Soft Halo already read, so
  * continuing could reuse its seq with different content. A new generation
  * starts instead.
  */
@@ -526,7 +526,7 @@ export interface UsageEnv {
   XDG_STATE_HOME?: string
 }
 
-/** SoftHalo's usage folder on this system, or null when no home folder is known. */
+/** Soft Halo's usage folder on this system, or null when no home folder is known. */
 export function usageRoot(env: UsageEnv, hasMacLibrary: boolean): string | null {
   const trim = (p: string) => p.replace(/[\\/]+$/, '')
   if (env.LOCALAPPDATA) return `${trim(env.LOCALAPPDATA)}/Softhalo/usage`

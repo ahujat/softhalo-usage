@@ -1,12 +1,12 @@
-# SoftHalo Usage
+# Soft Halo Usage
 
-**Keeps your Claude Code quota and token usage always on screen.** This plugin records usage numbers to a local folder. The SoftHalo desktop app shows them in its always-on-top overlay, so you can check your 5-hour and weekly limits at a glance instead of typing `/usage`.
+**Keeps your Claude Code quota and token usage always on screen.** This plugin records usage numbers to a local folder. The Soft Halo desktop app shows them in its always-on-top overlay, so you can check your 5-hour and weekly limits at a glance instead of typing `/usage`.
 
 ## Requirements
 
-- **Windows**, with **SoftHalo for Windows** (a version with AI usage). Without it, the plugin only writes small files that nothing reads.
+- **Windows**, with **Soft Halo for Windows** (a version with AI usage). Without it, the plugin only writes small files that nothing reads.
 
-SoftHalo with AI usage (2.0.5) is in beta. To try it now, see [REVIEWING.md](REVIEWING.md) for the signed beta build and setup steps.
+Soft Halo with AI usage (2.0.5) is in beta. To try it now, see [REVIEWING.md](REVIEWING.md) for the signed beta build and setup steps.
 
 ## What it records
 
@@ -15,9 +15,9 @@ After each model request, the plugin adds that request's usage to a running tota
 - token counts (uncached input, cache reads, cache writes and output), per day, per model, and whether the request came from the main conversation or a subagent
 - the number of requests, and how many reported no usage
 - the plan-limit percentages and reset times Claude Code reports (Pro and Max plans)
-- Claude Code's own cost estimate (API list prices, not a bill), split by the day it was spent; SoftHalo shows it only when there are no plan limits, as with an API key
+- Claude Code's own cost estimate (API list prices, not a bill), split by the day it was spent; Soft Halo shows it only when there are no plan limits, as with an API key
 
-It never records prompts, responses, tool output, file contents or account credentials. Session ids are kept so SoftHalo can tell sessions apart; the Claude configuration folder is identified only by a one-way hash, never by its path.
+It never records prompts, responses, tool output, file contents or account credentials. Session ids are kept so Soft Halo can tell sessions apart; the Claude configuration folder is identified only by a one-way hash, never by its path.
 
 ## Files this plugin writes and reads
 
@@ -30,9 +30,9 @@ The hooks module writes **only** these two files per Claude Code session, and no
 - The two files alternate, so a crash mid-write never damages the newest copy. Each holds the session's usage in the `softhalo.claude-snapshot/3` format: token counts, plan-limit percentages, Claude Code's cost estimate, the session id and a one-way hash of the configuration folder. They are rewritten at most every 5 to 10 seconds while you work, and once more when the session ends.
 - It **never** creates, edits or deletes build files, start-up or autostart entries, shell profiles, settings files (including Claude Code's), instructions files such as `CLAUDE.md`, or any file in your projects.
 
-It reads only: its own two files (to continue after a restart), `…/usage/ack/claude-<session id>.json` (written by SoftHalo to confirm what it has saved, before the plugin trims days older than 35 days), and, only where `LOCALAPPDATA` is not set, whether `~/Library/Application Support` exists.
+It reads only: its own two files (to continue after a restart), `…/usage/ack/claude-<session id>.json` (written by Soft Halo to confirm what it has saved, before the plugin trims days older than 35 days), and, only where `LOCALAPPDATA` is not set, whether `~/Library/Application Support` exists.
 
-Only Windows is supported. The code also picks a local folder when it runs on another system (`~/Library/Application Support/Softhalo/usage` on macOS, `$XDG_STATE_HOME/softhalo/usage` or `~/.local/state/softhalo/usage` elsewhere) so it never writes anywhere unexpected, but no SoftHalo app reads those folders.
+Only Windows is supported. The code also picks a local folder when it runs on another system (`~/Library/Application Support/Softhalo/usage` on macOS, `$XDG_STATE_HOME/softhalo/usage` or `~/.local/state/softhalo/usage` elsewhere) so it never writes anywhere unexpected, but no Soft Halo app reads those folders.
 
 ## What it does not do
 
@@ -42,7 +42,7 @@ Only Windows is supported. The code also picks a local folder when it runs on an
 
 ## Status and plans
 
-This is the first release (MVP) of SoftHalo's usage collection, and Claude Code is the first tool it covers. Collectors for **Codex**, **OpenClaw** and **Hermes** are planned, so that SoftHalo can show the quotas and token usage of all your AI coding tools together in one overlay rather than one tool at a time. Each will be a separate add-on for its own tool, writing to the same local folder in the same way; this plugin stays Claude Code only. There are no dates yet.
+This is the first release (MVP) of Soft Halo's usage collection, and Claude Code is the first tool it covers. Collectors for **Codex**, **OpenClaw** and **Hermes** are planned, so that Soft Halo can show the quotas and token usage of all your AI coding tools together in one overlay rather than one tool at a time. Each will be a separate add-on for its own tool, writing to the same local folder in the same way; this plugin stays Claude Code only. There are no dates yet.
 
 ## Install
 
@@ -51,7 +51,7 @@ claude plugin marketplace add ahujat/softhalo-usage
 claude plugin install softhalo-usage@softhalo
 ```
 
-Then install SoftHalo for Windows (a version with AI usage). Uninstalling the plugin stops all writes; you can delete the usage folder at any time.
+Then install Soft Halo for Windows (a version with AI usage). Uninstalling the plugin stops all writes; you can delete the usage folder at any time.
 
 ## Development
 
@@ -59,7 +59,7 @@ Then install SoftHalo for Windows (a version with AI usage). Uninstalling the pl
 - `claude plugin test .` runs the hooks module against the engine.
 - `claude plugin validate .` checks the manifest and the module.
 
-The file format is `softhalo.claude-snapshot/3`. SoftHalo's collector tests read this plugin's real output (`tests/make-fixture.ts`), so a change to the format fails there first.
+The file format is `softhalo.claude-snapshot/3`. Soft Halo's collector tests read this plugin's real output (`tests/make-fixture.ts`), so a change to the format fails there first.
 
 ## Privacy
 

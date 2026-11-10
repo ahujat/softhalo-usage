@@ -1,5 +1,5 @@
-// SoftHalo Usage: records this session's token usage and plan-limit readings
-// to SoftHalo's local usage folder. No network, no commands, no UI: SoftHalo
+// Soft Halo Usage: records this session's token usage and plan-limit readings
+// to Soft Halo's local usage folder. No network, no commands, no UI: Soft Halo
 // shows the numbers. The format and the write rules are in ./core.ts.
 import type { EngineInterface, Register } from 'claude-code'
 import {

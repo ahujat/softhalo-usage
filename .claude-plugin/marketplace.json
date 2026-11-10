@@ -1,8 +1,8 @@
 {
   "name": "softhalo",
-  "description": "SoftHalo plugins: usage and quota collection for the SoftHalo desktop app.",
+  "description": "Soft Halo plugins: usage and quota collection for the Soft Halo desktop app.",
   "owner": {
-    "name": "SoftHalo"
+    "name": "Soft Halo"
   },
   "plugins": [
     {
