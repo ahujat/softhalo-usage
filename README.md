@@ -6,6 +6,8 @@
 
 - **Windows**, with **SoftHalo for Windows** (a version with AI usage). Without it, the plugin only writes small files that nothing reads.
 
+SoftHalo with AI usage (2.0.5) is in beta. To try it now, see [REVIEWING.md](REVIEWING.md) for the signed beta build and setup steps.
+
 ## What it records
 
 After each model request, the plugin adds that request's usage to a running total for the session:
