@@ -25,7 +25,7 @@ import {
 /** WSL mounts the Windows C: drive here unless /etc/wsl.conf moves it; SOFTHALO_USAGE_DIR covers that case. */
 const WSL_WINDOWS_DRIVE = '/mnt/c'
 
-export const PLUGIN_VERSION = '1.0.0'
+export const PLUGIN_VERSION = '1.1.0'
 /** Wait this long after the last change before writing... */
 export const DEBOUNCE_MS = 5_000
 /** ...but never hold a change longer than this. */
