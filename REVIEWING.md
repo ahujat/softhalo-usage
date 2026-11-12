@@ -28,8 +28,9 @@ The plugin writes token usage and plan-limit readings to a local folder; the Sof
 
 ## What the plugin does and does not do
 
-- Writes only to `%LOCALAPPDATA%\Softhalo\usage\` (token counts, plan-limit percentages, Claude Code's cost estimate, session ids, and a one-way hash of the configuration folder). See [Files this plugin writes and reads](README.md#files-this-plugin-writes-and-reads).
+- Writes only to `%LOCALAPPDATA%\Softhalo\usage\` (token counts, plan-limit percentages, Claude Code's cost estimate, session ids, a one-way hash of the configuration folder and, with plan limits, a one-way hash of the account email). See [Files this plugin writes and reads](README.md#files-this-plugin-writes-and-reads).
 - Never reads or stores prompts, responses, tool output or project files.
+- Reads one field, `oauthAccount.emailAddress`, from Claude Code's login record `.claude.json`, and only when `$.session.identity()` refuses (it answers only org-managed plugins). Only its SHA-256 hash is written, as `quota_key`, so one account used from Windows and WSL shows one set of limits. See [Which account the limits belong to](README.md#which-account-the-limits-belong-to).
 - Makes no network requests: its hooks module calls only file, environment, clock and session functions (see `claude plugin validate` output), and its test suite fails if it ever calls `http.fetch`.
 - No commands, panes or notifications inside Claude Code.
 

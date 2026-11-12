@@ -30,6 +30,8 @@ function world(on: Parameters<Parameters<typeof test>[1]>[1], files: Map<string,
     return { value: [...names].map(name => ({ name, kind: files.has(dir + name) ? 'file' : 'dir', size: 0, mtimeMs: 0, isLink: false })) as never }
   })
   on('session.id', () => ({ value: sessionId.value }))
+  // An install that no organization manages: Claude Code doesn't say who is signed in.
+  on('session.identity', () => ({ value: { deny: 'not a managed mod' } }))
   on('session.usage', () => ({ value: { startedAt: clock.now() - 1000, rateLimits: [] } }))
   on('session.start', (_, e) => ({ cwd: e.cwd }))
   on('session.end', (_, e) => ({ sessionId: e.sessionId }))
@@ -178,4 +180,52 @@ test('SOFTHALO_USAGE_DIR names the folder on any system', async ($, on) => {
   await runStep($ as never, 't1', 0)
   await clock.advance(5_000)
   expect(files.has('/mnt/d/Users/t/AppData/Local/Softhalo/usage/claude/claude-s1.a.json')).toBe(true)
+})
+
+/** A Claude Code login record, as /login leaves it. */
+const login = (email: string) => JSON.stringify({ numStartups: 3, oauthAccount: { accountUuid: 'u-1', emailAddress: email, displayName: 'T' } })
+
+async function limitsAfterAReading($: Parameters<Parameters<typeof test>[1]>[0], clock: { advance: (ms: number) => Promise<void> }, files: Map<string, string>, slot: string) {
+  await $.session.start({ cwd: '/', surface: null, isInteractive: false })
+  await $.session.measure({
+    context: { window: 200000 } as never,
+    rateLimits: [{ kind: 'five_hour', percentUsed: 12, resetsAt: '2026-11-07T13:00:00Z' }],
+    changed: ['rateLimits'],
+  } as never)
+  await clock.advance(5_000)
+  return JSON.parse(files.get(slot) ?? '{}').limits
+}
+
+test('one account signed in on Windows and in WSL reports one account key, without the email', async ($, on) => {
+  const files = new Map<string, string>([['C:/Users/u/.claude.json', login('Ann@Example.com')]])
+  const clock = world(on, files)
+  const limits = await limitsAfterAReading($, clock, files, `${ROOT}/claude/claude-s1.a.json`)
+  expect(limits.quota_key).toBe('acct-b698b62e36f3599b824e')
+  expect(files.get(`${ROOT}/claude/claude-s1.a.json`)?.toLowerCase().includes('example.com')).toBe(false)
+})
+
+test('inside WSL the same account gives the same key', async ($, on) => {
+  const files = new Map<string, string>([
+    ['/mnt/c/Users/Tarun/AppData/Local/Softhalo/settings.json', '{}'],
+    ['/home/u/.claude.json', login('ann@example.com')],
+  ])
+  const clock = world(on, files, { value: 's1' }, WSL_ENV)
+  const limits = await limitsAfterAReading($, clock, files, '/mnt/c/Users/Tarun/AppData/Local/Softhalo/usage/claude/claude-s1.a.json')
+  expect(limits.quota_key).toBe('acct-b698b62e36f3599b824e')
+})
+
+test('a custom CLAUDE_CONFIG_DIR keeps its login inside the folder', async ($, on) => {
+  const files = new Map<string, string>([['D:/claude-work/.claude.json', login('work@example.com')]])
+  const clock = world(on, files, { value: 's1' }, { ...WINDOWS_ENV, CLAUDE_CONFIG_DIR: 'D:/claude-work/' })
+  const limits = await limitsAfterAReading($, clock, files, `${ROOT}/claude/claude-s1.a.json`)
+  expect(limits.quota_key.startsWith('acct-')).toBe(true)
+  expect(limits.quota_key).not.toBe('acct-b698b62e36f3599b824e')
+})
+
+test('without an account login the limits have no account key', async ($, on) => {
+  const files = new Map<string, string>([['C:/Users/u/.claude.json', '{"numStartups":1}']])
+  const clock = world(on, files)
+  const limits = await limitsAfterAReading($, clock, files, `${ROOT}/claude/claude-s1.a.json`)
+  expect(limits.quota_key).toBe(null)
+  expect(limits.windows.length).toBe(1)
 })

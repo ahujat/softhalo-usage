@@ -47,7 +47,8 @@ export interface QuotaWindow {
 
 export interface Limits {
   state: 'available' | 'unknown'
-  quota_key: null
+  /** The account these limits belong to (see quotaKey), or null when the session has no account login. */
+  quota_key: string | null
   login_marker: null
   windows: QuotaWindow[]
 }
@@ -277,7 +278,7 @@ export function costIncrease(state: SessionState, costUsd: number): number {
 /** Records a quota and cost reading. Returns whether anything changed. */
 export function applyMeasure(
   state: SessionState,
-  reading: { rateLimits: readonly RateLimitReading[]; costUsd?: number; utcOffsetMinutes?: number },
+  reading: { rateLimits: readonly RateLimitReading[]; costUsd?: number; utcOffsetMinutes?: number; quotaKey?: string | null },
   nowMs: number,
 ): boolean {
   let isChanged = false
@@ -294,7 +295,7 @@ export function applyMeasure(
     }
     const next: Limits = {
       state: windows.length > 0 ? 'available' : 'unknown',
-      quota_key: null,
+      quota_key: reading.quotaKey ?? null,
       login_marker: null,
       windows,
     }
@@ -572,4 +573,31 @@ export async function profileId(configDir: string): Promise<string> {
   const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(normalized))
   const hex = [...new Uint8Array(digest)].map(byte => byte.toString(16).padStart(2, '0')).join('')
   return `cfg-${hex.slice(0, 20)}`
+}
+
+/**
+ * The signed-in account's email from a Claude Code config file (`.claude.json`), or null. Only this
+ * one field is taken; the rest of the file is not kept.
+ */
+export function accountEmail(configText: string | null): string | null {
+  if (!configText) return null
+  try {
+    const email = JSON.parse(configText)?.oauthAccount?.emailAddress
+    return typeof email === 'string' && email.includes('@') ? email : null
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Plan limits belong to an account, not to a config folder: the same account signed in from Windows
+ * and from WSL has one set of limits. This key names the account without revealing it, a one-way hash
+ * of the email, the same on every folder and system signed in to it.
+ */
+export async function quotaKey(email: string): Promise<string> {
+  const normalized = `softhalo.quota/1
+${email.trim().toLowerCase()}`
+  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(normalized))
+  const hex = [...new Uint8Array(digest)].map(byte => byte.toString(16).padStart(2, '0')).join('')
+  return `acct-${hex.slice(0, 20)}`
 }

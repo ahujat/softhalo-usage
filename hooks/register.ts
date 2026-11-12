@@ -3,6 +3,7 @@
 // shows the numbers. The format and the write rules are in ./core.ts.
 import type { EngineInterface, Register } from 'claude-code'
 import {
+  accountEmail,
   applyMeasure,
   applyStep,
   ackPath,
@@ -12,6 +13,7 @@ import {
   parseAck,
   prepareWrite,
   profileId,
+  quotaKey,
   restore,
   slotPath,
   touch,
@@ -33,6 +35,8 @@ export const MAX_HOLD_MS = 10_000
 interface Writer {
   root: string | null | undefined
   profile: string | undefined
+  /** The Claude Code config file that records this folder's login. */
+  configFile: string | undefined
   current: SessionState | undefined
   loading: Promise<SessionState | undefined> | undefined
   /** One write in flight at a time, in order. */
@@ -87,8 +91,11 @@ async function setup($: EngineInterface, w: Writer): Promise<boolean> {
         !env.LOCALAPPDATA && !!home && (await $.fs.exists(`${home}/Library/Application Support`).catch(() => false))
       w.root = usageRoot(env, hasMacLibrary)
     }
-    const configDir = (await $.env.get('CLAUDE_CONFIG_DIR')) ?? (home ? `${home}/.claude` : 'default')
+    const customDir = await $.env.get('CLAUDE_CONFIG_DIR')
+    const configDir = customDir ?? (home ? `${home}/.claude` : 'default')
     w.profile = await profileId(configDir)
+    // Claude Code keeps the login next to the default folder, or inside a custom one.
+    w.configFile = customDir ? `${customDir.replace(/[\\/]+$/, '')}/.claude.json` : home ? `${home}/.claude.json` : undefined
   }
   return w.root !== null
 }
@@ -196,13 +203,29 @@ async function recordStep(
   if (isNew) await schedule($, w, state)
 }
 
+/**
+ * Which account the session is signed in to, as an opaque key. Claude Code answers this through
+ * $.session.identity() only to mods an organization manages; any other install reads the email from
+ * the person's own login record, the file that API reads too. Read again on each reading, so a /login
+ * to another account mid-session moves the limits to that account. Null without an account login.
+ */
+async function accountKey($: EngineInterface, w: Writer): Promise<string | null> {
+  const identity = await $.session.identity().catch(() => undefined)
+  const email = identity && !identity.deny && identity.email
+    ? identity.email
+    : w.configFile ? accountEmail(await readOrNull($, w.configFile)) : null
+  return email ? await quotaKey(email) : null
+}
+
 async function recordMeasure(
   $: EngineInterface,
   w: Writer,
   reading: { rateLimits: readonly { kind: string; percentUsed: number; resetsAt?: string }[]; costUsd?: number },
 ) {
   const state = await currentSession($, w)
-  if (state && applyMeasure(state, { ...reading, utcOffsetMinutes: utcOffsetMinutes() }, await $.clock.now())) {
+  if (!state) return
+  const key = reading.rateLimits.length > 0 ? await accountKey($, w) : (state.limits?.quota_key ?? null)
+  if (applyMeasure(state, { ...reading, quotaKey: key, utcOffsetMinutes: utcOffsetMinutes() }, await $.clock.now())) {
     await schedule($, w, state)
   }
 }
@@ -222,6 +245,7 @@ export const register: Register = on => {
   const w: Writer = {
     root: undefined,
     profile: undefined,
+    configFile: undefined,
     current: undefined,
     loading: undefined,
     chain: Promise.resolve(),
