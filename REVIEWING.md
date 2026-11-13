@@ -6,10 +6,11 @@ The plugin writes token usage and plan-limit readings to a local folder; the Sof
 
 - Windows 10 (build 17763 or later) or Windows 11
 - Claude Code, signed in. A Pro or Max plan shows the quota bars; an API key shows the estimated cost line instead.
-- Soft Halo beta 2.0.5.2, signed by Azonic International (75,540,648 bytes):
-  https://softhalo.app/downloads/windows/beta-2.0.5.2-aaa11afa6c6ec6dc/SoftHalo-Setup-2.0.5.2-win-x64.exe
-  - SHA-256: `AC310051E520EDA868BBC1D2825E2039357353AD5FC7364BCD1659303CE3F2B6` (also in [SHA256SUMS.txt](https://softhalo.app/downloads/windows/beta-2.0.5.2-aaa11afa6c6ec6dc/SHA256SUMS.txt)). To check it in PowerShell: `Get-FileHash .\SoftHalo-Setup-2.0.5.2-win-x64.exe`
-  - VirusTotal, 9 November 2026: [0 of 68 engines](https://www.virustotal.com/gui/file/ac310051e520eda868bbc1d2825e2039357353ad5fc7364bcd1659303ce3f2b6) flagged it.
+- Soft Halo beta 2.0.5.20, signed by Azonic International (75,583,888 bytes); this is the first build that merges one account's limits across folders, which plugin 1.1.0 needs:
+  https://softhalo.app/downloads/windows/beta-2.0.5.20-c3c1bd8903019c6f/SoftHalo-Setup-2.0.5.20-win-x64.exe
+  - SHA-256: `C3C1BD8903019C6F6ED9B33E312A02E3357E6A47844BE66FA3B7135D4C051104` (also in [SHA256SUMS.txt](https://softhalo.app/downloads/windows/beta-2.0.5.20-c3c1bd8903019c6f/SHA256SUMS.txt)). To check it in PowerShell: `Get-FileHash .\SoftHalo-Setup-2.0.5.20-win-x64.exe`
+  - VirusTotal, 12 November 2026: [0 of 68 engines](https://www.virustotal.com/gui/file/c3c1bd8903019c6f6ed9b33e312a02e3357e6a47844be66fa3b7135d4c051104) flagged it.
+  - Beta page with release notes: https://softhalo.app/download/beta-20520-754472b3018aaa06
 
 ## Steps (about 10 minutes)
 
