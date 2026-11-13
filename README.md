@@ -4,9 +4,9 @@
 
 ## Requirements
 
-- **Windows** (Claude Code on Windows itself or in WSL), with **Soft Halo for Windows** (a version with AI usage). Without it, the plugin only writes small files that nothing reads.
+- **Windows** (Claude Code on Windows itself or in WSL), with **Soft Halo for Windows 2.0.5.22 or later**. Without it, the plugin only writes small files that nothing reads.
 
-Soft Halo with AI usage (2.0.5) is in beta. To try it now, see [REVIEWING.md](REVIEWING.md) for the signed beta build and setup steps.
+Soft Halo with AI usage is in beta. Get the signed 2.0.5.22 build from the [beta page](https://softhalo.app/download/beta-20522-3535fbf8dac88ffa); [REVIEWING.md](REVIEWING.md) has the checksum and setup steps.
 
 ## What it records
 
@@ -55,7 +55,7 @@ Apart from WSL, only Windows is supported. The code also picks a local folder wh
 
 ## Status and plans
 
-This is the first release (MVP) of Soft Halo's usage collection, and Claude Code is the first tool it covers. Collectors for **Codex**, **OpenClaw** and **Hermes** are planned, so that Soft Halo can show the quotas and token usage of all your AI coding tools together in one overlay rather than one tool at a time. Each will be a separate add-on for its own tool, writing to the same local folder in the same way; this plugin stays Claude Code only. There are no dates yet.
+This is the first release (MVP) of Soft Halo's usage collection, and Claude Code is the first tool it covers. Soft Halo can show the usage of your other AI coding tools in the same overlay, each through its own add-on that writes to the same local folder in the same way: [Hermes](https://github.com/ahujat/softhalo-usage-hermes) and [OpenClaw](https://github.com/ahujat/softhalo-usage-openclaw), with Codex in beta. This plugin stays Claude Code only.
 
 ## Install
 
@@ -64,7 +64,7 @@ claude plugin marketplace add ahujat/softhalo-usage
 claude plugin install softhalo-usage@softhalo
 ```
 
-Then install Soft Halo for Windows (a version with AI usage). Uninstalling the plugin stops all writes; you can delete the usage folder at any time.
+Then install [Soft Halo for Windows 2.0.5.22 or later](https://softhalo.app/download/beta-20522-3535fbf8dac88ffa). Uninstalling the plugin stops all writes; you can delete the usage folder at any time.
 
 ## Development
 

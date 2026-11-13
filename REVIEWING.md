@@ -6,11 +6,12 @@ The plugin writes token usage and plan-limit readings to a local folder; the Sof
 
 - Windows 10 (build 17763 or later) or Windows 11
 - Claude Code, signed in. A Pro or Max plan shows the quota bars; an API key shows the estimated cost line instead.
-- Soft Halo beta 2.0.5.20, signed by Azonic International (75,583,888 bytes); this is the first build that merges one account's limits across folders, which plugin 1.1.0 needs:
-  https://softhalo.app/downloads/windows/beta-2.0.5.20-c3c1bd8903019c6f/SoftHalo-Setup-2.0.5.20-win-x64.exe
-  - SHA-256: `C3C1BD8903019C6F6ED9B33E312A02E3357E6A47844BE66FA3B7135D4C051104` (also in [SHA256SUMS.txt](https://softhalo.app/downloads/windows/beta-2.0.5.20-c3c1bd8903019c6f/SHA256SUMS.txt)). To check it in PowerShell: `Get-FileHash .\SoftHalo-Setup-2.0.5.20-win-x64.exe`
-  - VirusTotal, 12 November 2026: [0 of 68 engines](https://www.virustotal.com/gui/file/c3c1bd8903019c6f6ed9b33e312a02e3357e6a47844be66fa3b7135d4c051104) flagged it.
-  - Beta page with release notes: https://softhalo.app/download/beta-20520-754472b3018aaa06
+- Soft Halo beta 2.0.5.22, signed by Azonic International (75,597,352 bytes). It is the first build that shows one Claude account used from two folders (for example Windows and WSL) as one set of limits in every case, which plugin 1.1.0 relies on:
+  https://softhalo.app/downloads/windows/beta-2.0.5.22-5985046ede0cd277/SoftHalo-Setup-2.0.5.22-win-x64.exe
+  - SHA-256: `5985046EDE0CD2774BA35101B583A6E18E32FDC24D7E49253D0F8E5258086E45` (also in [SHA256SUMS.txt](https://softhalo.app/downloads/windows/beta-2.0.5.22-5985046ede0cd277/SHA256SUMS.txt)). To check it in PowerShell: `Get-FileHash .\SoftHalo-Setup-2.0.5.22-win-x64.exe`
+  - VirusTotal, 12 November 2026: [0 of 67 engines](https://www.virustotal.com/gui/file/5985046ede0cd2774ba35101b583a6e18e32fdc24d7e49253d0f8e5258086e45) flagged it.
+  - Beta page with release notes: https://softhalo.app/download/beta-20522-3535fbf8dac88ffa
+  - Upgrading from an earlier beta that showed two sets of Claude bars: the first view after the upgrade can show the older reading until your next Claude Code message.
 
 ## Steps (about 10 minutes)
 
