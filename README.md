@@ -6,7 +6,7 @@
 
 - **Windows** (Claude Code on Windows itself or in WSL), with **Soft Halo for Windows 2.0.5.22 or later**. Without it, the plugin only writes small files that nothing reads.
 
-Soft Halo with AI usage is in beta. Get the signed 2.0.5.22 build from the [beta page](https://softhalo.app/download/beta-20522-3535fbf8dac88ffa); [REVIEWING.md](REVIEWING.md) has the checksum and setup steps.
+Soft Halo with AI usage is in beta. Get the signed 2.0.5.28 build from the [beta page](https://softhalo.app/download/beta-20528-c17d7d2ef502eea9); [REVIEWING.md](REVIEWING.md) has the checksum and setup steps.
 
 ## What it records
 
@@ -64,7 +64,7 @@ claude plugin marketplace add ahujat/softhalo-usage
 claude plugin install softhalo-usage@softhalo
 ```
 
-Then install [Soft Halo for Windows 2.0.5.22 or later](https://softhalo.app/download/beta-20522-3535fbf8dac88ffa). Uninstalling the plugin stops all writes; you can delete the usage folder at any time.
+Then install [Soft Halo for Windows 2.0.5.22 or later](https://softhalo.app/download/beta-20528-c17d7d2ef502eea9). Uninstalling the plugin stops all writes; you can delete the usage folder at any time.
 
 ## Development
 

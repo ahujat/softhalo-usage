@@ -6,11 +6,11 @@ The plugin writes token usage and plan-limit readings to a local folder; the Sof
 
 - Windows 10 (build 17763 or later) or Windows 11
 - Claude Code, signed in. A Pro or Max plan shows the quota bars; an API key shows the estimated cost line instead.
-- Soft Halo beta 2.0.5.22, signed by Azonic International (75,597,352 bytes). It is the first build that shows one Claude account used from two folders (for example Windows and WSL) as one set of limits in every case, which plugin 1.1.0 relies on:
-  https://softhalo.app/downloads/windows/beta-2.0.5.22-5985046ede0cd277/SoftHalo-Setup-2.0.5.22-win-x64.exe
-  - SHA-256: `5985046EDE0CD2774BA35101B583A6E18E32FDC24D7E49253D0F8E5258086E45` (also in [SHA256SUMS.txt](https://softhalo.app/downloads/windows/beta-2.0.5.22-5985046ede0cd277/SHA256SUMS.txt)). To check it in PowerShell: `Get-FileHash .\SoftHalo-Setup-2.0.5.22-win-x64.exe`
-  - VirusTotal, 12 November 2026: [0 of 67 engines](https://www.virustotal.com/gui/file/5985046ede0cd2774ba35101b583a6e18e32fdc24d7e49253d0f8e5258086e45) flagged it.
-  - Beta page with release notes: https://softhalo.app/download/beta-20522-3535fbf8dac88ffa
+- Soft Halo beta 2.0.5.28, signed by Azonic International (75,496,040 bytes). Plugin 1.1.0 needs 2.0.5.22 or later, the first build that shows one Claude account used from two folders (for example Windows and WSL) as one set of limits in every case:
+  https://softhalo.app/downloads/windows/beta-2.0.5.28-9afbdaef9ce076b6/SoftHalo-Setup-2.0.5.28-win-x64.exe
+  - SHA-256: `9AFBDAEF9CE076B6ED1525FF7E6D93D61C0B4A4F5F9152ED59A446B0F0389C59` (also in [SHA256SUMS.txt](https://softhalo.app/downloads/windows/beta-2.0.5.28-9afbdaef9ce076b6/SHA256SUMS.txt)). To check it in PowerShell: `Get-FileHash .\SoftHalo-Setup-2.0.5.28-win-x64.exe`
+  - VirusTotal, 13 November 2026: [0 of 67 engines](https://www.virustotal.com/gui/file/9afbdaef9ce076b6ed1525ff7e6d93d61c0b4a4f5f9152ed59a446b0f0389c59) flagged it.
+  - Beta page with release notes: https://softhalo.app/download/beta-20528-c17d7d2ef502eea9
   - Upgrading from an earlier beta that showed two sets of Claude bars: the first view after the upgrade can show the older reading until your next Claude Code message.
 
 ## Steps (about 10 minutes)
