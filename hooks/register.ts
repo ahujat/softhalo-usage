@@ -1,6 +1,7 @@
 // Soft Halo Usage: records this session's token usage and plan-limit readings
 // to Soft Halo's local usage folder. No network, no commands, no UI: Soft Halo
-// shows the numbers. The format and the write rules are in ./core.ts.
+// shows the numbers. The one exception is a single transcript line when nothing
+// can be recorded (in WSL no Soft Halo folder, or a folder that can't be written). The format and the write rules are in ./core.ts.
 import type { EngineInterface, Register } from 'claude-code'
 import {
   accountEmail,
@@ -18,6 +19,9 @@ import {
   slotPath,
   touch,
   usageRoot,
+  writeFailedNotice,
+  wslMiss,
+  wslMissNotice,
   wslUsageRoot,
   type SessionState,
 } from './core.ts'
@@ -25,7 +29,7 @@ import {
 /** WSL mounts the Windows C: drive here unless /etc/wsl.conf moves it; SOFTHALO_USAGE_DIR covers that case. */
 const WSL_WINDOWS_DRIVE = '/mnt/c'
 
-export const PLUGIN_VERSION = '1.1.0'
+export const PLUGIN_VERSION = '1.1.1'
 /** Wait this long after the last change before writing... */
 export const DEBOUNCE_MS = 5_000
 /** ...but never hold a change longer than this. */
@@ -43,6 +47,8 @@ interface Writer {
   chain: Promise<void>
   timer: { cancel: () => void } | undefined
   pendingSince: number | undefined
+  /** Set once a failed write has been said in the transcript, so it is said only once. */
+  writeWarned: boolean
 }
 
 const utcOffsetMinutes = () => -new Date().getTimezoneOffset()
@@ -55,20 +61,27 @@ async function readOrNull($: EngineInterface, path: string): Promise<string | nu
   }
 }
 
-/** Inside WSL, Soft Halo's folder on the Windows side, through the C: drive mount. */
+/**
+ * Inside WSL, Soft Halo's folder on the Windows side, through the C: drive mount. When there is
+ * none, one line in the transcript says why, once per session start, so nothing fails silently.
+ */
 async function findWslRoot($: EngineInterface, linuxUser: string | undefined): Promise<string | null> {
   const usersDir = `${WSL_WINDOWS_DRIVE}/Users`
+  const withSofthalo: string[] = []
+  let driveListed = false
   try {
     const entries = await $.fs.list(usersDir)
-    const withSofthalo: string[] = []
+    driveListed = true
     for (const entry of entries) {
       if (entry.kind !== 'dir') continue
       if (await $.fs.exists(`${usersDir}/${entry.name}/AppData/Local/Softhalo`).catch(() => false)) withSofthalo.push(entry.name)
     }
-    return wslUsageRoot(usersDir, withSofthalo, linuxUser)
   } catch {
-    return null
+    // No /mnt/c (automount off, or C: mounted elsewhere): said below.
   }
+  const root = driveListed ? wslUsageRoot(usersDir, withSofthalo, linuxUser) : null
+  if (!root) $.ui.log(wslMissNotice(wslMiss(driveListed, withSofthalo), usersDir))
+  return root
 }
 
 async function setup($: EngineInterface, w: Writer): Promise<boolean> {
@@ -151,9 +164,14 @@ function flush($: EngineInterface, w: Writer, state: SessionState): Promise<void
       await $.fs.write(slotPath(w.root, state.sessionId, write.slot), write.text)
       write.commit()
     })
-    .catch(() => {
+    .catch((error: unknown) => {
       // A failed write leaves the state as it was: the next one retries into
       // the same slot, and the other slot still holds the newest version.
+      // A folder that can't be written at all (a drive not mounted) is said once.
+      if (!w.writeWarned && w.root) {
+        w.writeWarned = true
+        $.ui.log(writeFailedNotice(w.root, error))
+      }
     })
   return w.chain
 }
@@ -251,6 +269,7 @@ export const register: Register = on => {
     chain: Promise.resolve(),
     timer: undefined,
     pendingSince: undefined,
+    writeWarned: false,
   }
 
   on('session.start', async ($, e, next) => {

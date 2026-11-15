@@ -2,6 +2,7 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
 import {
+  writeFailedNotice,
   applyMeasure,
   applyStep,
   localDay,
@@ -352,4 +353,14 @@ test('requests with and without usage in one bucket mark its counters as partial
   const u = fresh()
   applyStep(u, { key: 'k1', requestedModel: 'claude-opus-5-5', usage: usage('claude-opus-5-5', 10, 20), finishedAtMs: T0, utcOffsetMinutes: IST })
   assert.equal(write(u).buckets[0].incomplete, undefined)
+})
+
+test('a failed write names the folder and the cause, without the engine prefix', () => {
+  const root = '/mnt/x/Users/u/AppData/Local/Softhalo/usage'
+  const real = new Error(`softhalo-usage: $.fs.write(${root}/claude/claude-3fbf5711-ee39-43e8-b96d-8b595e250eb9.a.json): EACCES: permission denied, mkdir '/mnt/x'`)
+  assert.equal(
+    writeFailedNotice(root, real).split(' (')[1].split('),')[0],
+    "EACCES: permission denied, mkdir '/mnt/x'",
+  )
+  assert.match(writeFailedNotice(root, new Error('softhalo-usage: $.fs.write: ENOSPC: no space')), /\(ENOSPC: no space\)/)
 })

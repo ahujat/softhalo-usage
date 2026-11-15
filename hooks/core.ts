@@ -559,6 +559,35 @@ export function wslUsageRoot(usersDir: string, withSofthalo: string[], linuxUser
   return pick ? `${usersDir.replace(/\/+$/, '')}/${pick}/AppData/Local/Softhalo/usage` : null
 }
 
+/** Why WSL gave no folder: the drive isn't there, no Windows user has Soft Halo, or several do. */
+export type WslMiss = 'no-drive' | 'no-folder' | 'several'
+
+export function wslMiss(driveListed: boolean, withSofthalo: string[]): WslMiss {
+  if (!driveListed) return 'no-drive'
+  return withSofthalo.filter(name => !NOT_A_USER.has(name.toLowerCase())).length > 1 ? 'several' : 'no-folder'
+}
+
+/** The one line shown when nothing will be recorded in WSL, so the silence has a reason. */
+export function wslMissNotice(miss: WslMiss, usersDir: string): string {
+  const why =
+    miss === 'no-drive'
+      ? `the Windows drive isn't visible at ${usersDir}`
+      : miss === 'several'
+        ? `several Windows users under ${usersDir} have a Soft Halo folder and none is named like your Linux user`
+        : `no Windows user under ${usersDir} has a Soft Halo folder (is Soft Halo installed on Windows?)`
+  return `Soft Halo Usage: nothing is recorded in this session, because ${why}. Set SOFTHALO_USAGE_DIR to Soft Halo's usage folder, for example /mnt/c/Users/<you>/AppData/Local/Softhalo/usage.`
+}
+
+/** The one line shown when the usage folder can't be written (a drive not mounted, no permission). */
+export function writeFailedNotice(root: string, error: unknown): string {
+  const message = error instanceof Error ? error.message : String(error)
+  // The engine prefixes its own errors with the plugin, the call and the path; from the error code
+  // ("EACCES: permission denied, mkdir '/mnt/x'") on is the cause.
+  const line = message.split(/\r?\n/)[0]
+  const reason = (line.match(/\bE[A-Z0-9]{2,}\b.*$/)?.[0] ?? line).slice(0, 120) || 'write failed'
+  return `Soft Halo Usage: can't write to ${root} (${reason}), so nothing is recorded. Check that the drive is mounted and SOFTHALO_USAGE_DIR, if set, names Soft Halo's usage folder.`
+}
+
 export const slotPath = (root: string, sessionId: string, slot: Slot) => `${root}/claude/claude-${sessionId}.${slot}.json`
 export const ackPath = (root: string, sessionId: string) => `${root}/ack/claude-${sessionId}.json`
 

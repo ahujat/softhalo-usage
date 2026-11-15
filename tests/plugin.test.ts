@@ -20,6 +20,8 @@ function world(on: Parameters<Parameters<typeof test>[1]>[1], files: Map<string,
     return { value: text }
   })
   on('fs.write', (_, e) => {
+    // /mnt/x stands for a drive that isn't mounted: nothing can be created under it.
+    if (key(e.path).startsWith('/mnt/x/')) return { deny: "EACCES: permission denied, mkdir '/mnt/x'" }
     files.set(key(e.path), e.text)
     return { value: undefined }
   })
@@ -27,6 +29,8 @@ function world(on: Parameters<Parameters<typeof test>[1]>[1], files: Map<string,
   on('fs.list', (_, e) => {
     const dir = `${key(e.path ?? '')}/`
     const names = new Set([...files.keys()].filter(f => f.startsWith(dir)).map(f => f.slice(dir.length).split('/')[0]))
+    // A folder with nothing under it doesn't exist here, as /mnt/c when C: isn't mounted.
+    if (names.size === 0) throw new Error('ENOENT')
     return { value: [...names].map(name => ({ name, kind: files.has(dir + name) ? 'file' : 'dir', size: 0, mtimeMs: 0, isLink: false })) as never }
   })
   on('session.id', () => ({ value: sessionId.value }))
@@ -164,13 +168,72 @@ test('inside WSL the plugin writes to the Soft Halo folder of the Windows user',
   expect([...files.keys()].some(f => f.startsWith('/home/'))).toBe(false)
 })
 
-test('inside WSL without Soft Halo on Windows nothing is written', async ($, on) => {
+/** Collects the transcript lines the plugin logs. */
+function transcript(on: Parameters<Parameters<typeof test>[1]>[1]) {
+  const lines: string[] = []
+  on('ui.log', (_, e) => {
+    lines.push(e.text)
+    return { value: undefined }
+  })
+  return lines
+}
+
+test('inside WSL without Soft Halo on Windows nothing is written, and one line says why', async ($, on) => {
   const files = new Map<string, string>([['/mnt/c/Users/Tarun/AppData/Local/Temp/x', '']])
+  const lines = transcript(on)
   const clock = world(on, files, { value: 's1' }, WSL_ENV)
   await $.session.start({ cwd: '/', surface: null, isInteractive: false })
   await runStep($ as never, 't1', 0)
+  await runStep($ as never, 't1', 1)
   await clock.advance(10_000)
   expect(files.size).toBe(1)
+  expect(lines.length).toBe(1)
+  expect(lines[0]).toContain('no Windows user under /mnt/c/Users has a Soft Halo folder')
+  expect(lines[0]).toContain('SOFTHALO_USAGE_DIR')
+})
+
+test('inside WSL with the Windows drive not mounted the line says so', async ($, on) => {
+  const files = new Map<string, string>()
+  const lines = transcript(on)
+  world(on, files, { value: 's1' }, WSL_ENV)
+  await $.session.start({ cwd: '/', surface: null, isInteractive: false })
+  expect(files.size).toBe(0)
+  expect(lines.length).toBe(1)
+  expect(lines[0]).toContain("the Windows drive isn't visible at /mnt/c/Users")
+})
+
+test('inside WSL with several Soft Halo users and none matching, the line names the cause', async ($, on) => {
+  const files = new Map<string, string>([
+    ['/mnt/c/Users/Ann/AppData/Local/Softhalo/settings.json', '{}'],
+    ['/mnt/c/Users/Sam/AppData/Local/Softhalo/settings.json', '{}'],
+  ])
+  const lines = transcript(on)
+  world(on, files, { value: 's1' }, WSL_ENV)
+  await $.session.start({ cwd: '/', surface: null, isInteractive: false })
+  expect(lines.length).toBe(1)
+  expect(lines[0]).toContain('several Windows users')
+})
+
+test('a usage folder that cannot be written is said once, however many writes fail', async ($, on) => {
+  const files = new Map<string, string>()
+  const lines = transcript(on)
+  const clock = world(on, files, { value: 's1' }, { ...WSL_ENV, SOFTHALO_USAGE_DIR: '/mnt/x/Users/u/AppData/Local/Softhalo/usage' })
+  await $.session.start({ cwd: '/', surface: null, isInteractive: false })
+  await runStep($ as never, 't1', 0)
+  await clock.advance(10_000)
+  await runStep($ as never, 't1', 1)
+  await clock.advance(10_000)
+  expect(files.size).toBe(0)
+  expect(lines.length).toBe(1)
+  expect(lines[0]).toContain("can't write to /mnt/x/Users/u/AppData/Local/Softhalo/usage (EACCES")
+})
+
+test('when the folder is found, nothing is logged', async ($, on) => {
+  const files = new Map<string, string>([['/mnt/c/Users/Tarun/AppData/Local/Softhalo/settings.json', '{}']])
+  const lines = transcript(on)
+  world(on, files, { value: 's1' }, WSL_ENV)
+  await $.session.start({ cwd: '/', surface: null, isInteractive: false })
+  expect(lines.length).toBe(0)
 })
 
 test('SOFTHALO_USAGE_DIR names the folder on any system', async ($, on) => {

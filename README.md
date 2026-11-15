@@ -43,14 +43,14 @@ It writes only a one-way hash of that email (`acct-` followed by 20 hex digits, 
 
 ### In WSL
 
-When Claude Code runs inside WSL on the same Windows PC, the plugin writes to the same Windows folder, through the C: drive mount: `/mnt/c/Users/<Windows user>/AppData/Local/Softhalo/usage/`. It finds the Windows user by looking for an `AppData/Local/Softhalo` folder under `/mnt/c/Users`. If exactly one user has one, it uses that. If several do, it uses the one whose name matches your Linux user name. If it finds none, it writes nothing. If your C: drive is mounted elsewhere, or the names differ, set `SOFTHALO_USAGE_DIR` to the folder, for example `/mnt/c/Users/Ann/AppData/Local/Softhalo/usage`. `SOFTHALO_USAGE_DIR` also overrides the folder on Windows.
+When Claude Code runs inside WSL on the same Windows PC, the plugin writes to the same Windows folder, through the C: drive mount: `/mnt/c/Users/<Windows user>/AppData/Local/Softhalo/usage/`. It finds the Windows user by looking for an `AppData/Local/Softhalo` folder under `/mnt/c/Users`. If exactly one user has one, it uses that. If several do, it uses the one whose name matches your Linux user name. If it finds none (C: isn't mounted, Soft Halo isn't installed on Windows, or several users have it and none matches), it writes nothing and adds one dim line to the transcript at the start of the session saying which, so the missing numbers have a reason. If your C: drive is mounted elsewhere, or the names differ, set `SOFTHALO_USAGE_DIR` to the folder, for example `/mnt/c/Users/Ann/AppData/Local/Softhalo/usage`. `SOFTHALO_USAGE_DIR` also overrides the folder on Windows. If the folder it chose can't be written (for example `SOFTHALO_USAGE_DIR` on a drive that isn't mounted), it records nothing and adds one transcript line saying so, once.
 
 Apart from WSL, only Windows is supported. The code also picks a local folder when it runs on another system (`~/Library/Application Support/Softhalo/usage` on macOS, `$XDG_STATE_HOME/softhalo/usage` or `~/.local/state/softhalo/usage` on other Linux systems) so it never writes anywhere unexpected, but no Soft Halo app reads those folders.
 
 ## What it does not do
 
 - No network requests of any kind. Nothing leaves your machine.
-- No commands, panels, notifications or changes to Claude's behaviour.
+- No commands, panels, notifications or changes to Claude's behaviour. Its only output is one transcript line when it can't record (no Soft Halo folder in WSL, or a folder it can't write); it isn't sent to the model.
 - No reading of your conversation or your project's files. From Claude Code's login record it reads only the account email, and writes only its hash.
 
 ## Status and plans
