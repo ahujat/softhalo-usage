@@ -567,15 +567,20 @@ export function wslMiss(driveListed: boolean, withSofthalo: string[]): WslMiss {
   return withSofthalo.filter(name => !NOT_A_USER.has(name.toLowerCase())).length > 1 ? 'several' : 'no-folder'
 }
 
-/** The one line shown when nothing will be recorded in WSL, so the silence has a reason. */
+/**
+ * The one line shown when nothing can be recorded in WSL yet, so the silence has a reason, and
+ * the first thing to do about it. The plugin looks again on later turns, so no restart is needed.
+ */
 export function wslMissNotice(miss: WslMiss, usersDir: string): string {
-  const why =
-    miss === 'no-drive'
-      ? `the Windows drive isn't visible at ${usersDir}`
-      : miss === 'several'
-        ? `several Windows users under ${usersDir} have a Soft Halo folder and none is named like your Linux user`
-        : `no Windows user under ${usersDir} has a Soft Halo folder (is Soft Halo installed on Windows?)`
-  return `Soft Halo Usage: nothing is recorded in this session, because ${why}. Set SOFTHALO_USAGE_DIR to Soft Halo's usage folder, for example /mnt/c/Users/<you>/AppData/Local/Softhalo/usage.`
+  const head = 'Soft Halo Usage: nothing is being recorded'
+  if (miss === 'no-drive') {
+    return `${head}, because the Windows drive isn't visible at ${usersDir}. Mount your Windows drive; recording starts on a later turn once it is. If Windows is mounted somewhere else, set SOFTHALO_USAGE_DIR to Soft Halo's usage folder there.`
+  }
+  const example = `${usersDir.replace(/\/+$/, '')}/<you>/AppData/Local/Softhalo/usage`
+  if (miss === 'several') {
+    return `${head}, because several Windows users under ${usersDir} have a Soft Halo folder and none is named like your Linux user. Set SOFTHALO_USAGE_DIR to yours, for example ${example}.`
+  }
+  return `${head}, because no Windows user under ${usersDir} has a Soft Halo folder. Install and start Soft Halo on Windows; recording starts on a later turn once it has. If its folder is elsewhere, set SOFTHALO_USAGE_DIR to it, for example ${example}.`
 }
 
 /** The one line shown when the usage folder can't be written (a drive not mounted, no permission). */

@@ -33,7 +33,7 @@ The plugin writes token usage and plan-limit readings to a local folder; the Sof
 - Never reads or stores prompts, responses, tool output or project files.
 - Reads one field, `oauthAccount.emailAddress`, from Claude Code's login record `.claude.json`, and only when `$.session.identity()` refuses (it answers only org-managed plugins). Only its SHA-256 hash is written, as `quota_key`, so one account used from Windows and WSL shows one set of limits. See [Which account the limits belong to](README.md#which-account-the-limits-belong-to).
 - Makes no network requests: its hooks module calls only file, environment, clock and session functions (see `claude plugin validate` output), and its test suite fails if it ever calls `http.fetch`.
-- No commands, panes or notifications inside Claude Code. In WSL, when it can't find Soft Halo's folder, or when its folder can't be written, it adds one transcript line (`$.ui.log`) saying why nothing is recorded.
+- No commands, panes or notifications inside Claude Code. In WSL, when it can't find Soft Halo's folder, or when its folder can't be written, it adds one transcript line (`$.ui.log`) saying why nothing is recorded. While no folder is found it looks again on a usage event, at most once a minute; there is no timer.
 
 ## Removing it
 

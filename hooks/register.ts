@@ -1,7 +1,8 @@
 // Soft Halo Usage: records this session's token usage and plan-limit readings
 // to Soft Halo's local usage folder. No network, no commands, no UI: Soft Halo
 // shows the numbers. The one exception is a single transcript line when nothing
-// can be recorded (in WSL no Soft Halo folder, or a folder that can't be written). The format and the write rules are in ./core.ts.
+// can be recorded (in WSL no Soft Halo folder, or a folder that can't be written).
+// The format and the write rules are in ./core.ts.
 import type { EngineInterface, Register } from 'claude-code'
 import {
   accountEmail,
@@ -34,6 +35,8 @@ export const PLUGIN_VERSION = '1.1.1'
 export const DEBOUNCE_MS = 5_000
 /** ...but never hold a change longer than this. */
 export const MAX_HOLD_MS = 10_000
+/** In WSL without a folder, look again on a usage event at most this often, so a drive mounted later starts recording. */
+export const WSL_RETRY_MS = 60_000
 
 /** What the module keeps between events. Module variables start over on a hot reload; the slots don't. */
 interface Writer {
@@ -49,6 +52,9 @@ interface Writer {
   pendingSince: number | undefined
   /** Set once a failed write has been said in the transcript, so it is said only once. */
   writeWarned: boolean
+  /** In WSL with no folder found: when to look again, and the Linux user to match. */
+  wslRetryAt: number | undefined
+  linuxUser: string | undefined
 }
 
 const utcOffsetMinutes = () => -new Date().getTimezoneOffset()
@@ -63,9 +69,10 @@ async function readOrNull($: EngineInterface, path: string): Promise<string | nu
 
 /**
  * Inside WSL, Soft Halo's folder on the Windows side, through the C: drive mount. When there is
- * none, one line in the transcript says why, once per session start, so nothing fails silently.
+ * none, one line in the transcript says why (not again on the lookups that follow), so nothing
+ * fails silently.
  */
-async function findWslRoot($: EngineInterface, linuxUser: string | undefined): Promise<string | null> {
+async function findWslRoot($: EngineInterface, linuxUser: string | undefined, quiet: boolean): Promise<string | null> {
   const usersDir = `${WSL_WINDOWS_DRIVE}/Users`
   const withSofthalo: string[] = []
   let driveListed = false
@@ -80,7 +87,7 @@ async function findWslRoot($: EngineInterface, linuxUser: string | undefined): P
     // No /mnt/c (automount off, or C: mounted elsewhere): said below.
   }
   const root = driveListed ? wslUsageRoot(usersDir, withSofthalo, linuxUser) : null
-  if (!root) $.ui.log(wslMissNotice(wslMiss(driveListed, withSofthalo), usersDir))
+  if (!root && !quiet) $.ui.log(wslMissNotice(wslMiss(driveListed, withSofthalo), usersDir))
   return root
 }
 
@@ -98,7 +105,9 @@ async function setup($: EngineInterface, w: Writer): Promise<boolean> {
     if (override) {
       w.root = override.replace(/[\\/]+$/, '')
     } else if (wsl && !env.LOCALAPPDATA) {
-      w.root = await findWslRoot($, await $.env.get('USER'))
+      w.linuxUser = await $.env.get('USER')
+      w.root = await findWslRoot($, w.linuxUser, false)
+      if (w.root === null) w.wslRetryAt = (await $.clock.now()) + WSL_RETRY_MS
     } else {
       const hasMacLibrary =
         !env.LOCALAPPDATA && !!home && (await $.fs.exists(`${home}/Library/Application Support`).catch(() => false))
@@ -109,6 +118,13 @@ async function setup($: EngineInterface, w: Writer): Promise<boolean> {
     w.profile = await profileId(configDir)
     // Claude Code keeps the login next to the default folder, or inside a custom one.
     w.configFile = customDir ? `${customDir.replace(/[\\/]+$/, '')}/.claude.json` : home ? `${home}/.claude.json` : undefined
+  } else if (w.root === null && w.wslRetryAt !== undefined) {
+    // The drive may have been mounted, or Soft Halo installed, since the last look.
+    const now = await $.clock.now()
+    if (now >= w.wslRetryAt) {
+      w.root = await findWslRoot($, w.linuxUser, true)
+      w.wslRetryAt = w.root === null ? now + WSL_RETRY_MS : undefined
+    }
   }
   return w.root !== null
 }
@@ -270,6 +286,8 @@ export const register: Register = on => {
     timer: undefined,
     pendingSince: undefined,
     writeWarned: false,
+    wslRetryAt: undefined,
+    linuxUser: undefined,
   }
 
   on('session.start', async ($, e, next) => {

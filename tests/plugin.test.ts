@@ -200,6 +200,27 @@ test('inside WSL with the Windows drive not mounted the line says so', async ($,
   expect(files.size).toBe(0)
   expect(lines.length).toBe(1)
   expect(lines[0]).toContain("the Windows drive isn't visible at /mnt/c/Users")
+  expect(lines[0]).toContain('Mount your Windows drive')
+})
+
+test('a Windows drive mounted later starts recording on a later turn, with no second line', async ($, on) => {
+  const files = new Map<string, string>()
+  const lines = transcript(on)
+  const clock = world(on, files, { value: 's1' }, WSL_ENV)
+  await $.session.start({ cwd: '/', surface: null, isInteractive: false })
+  // The drive is mounted, and Soft Halo's folder appears.
+  files.set('/mnt/c/Users/Tarun/AppData/Local/Softhalo/settings.json', '{}')
+  // Within the minute the plugin hasn't looked again yet.
+  await runStep($ as never, 't1', 0)
+  await clock.advance(5_000)
+  expect(files.size).toBe(1)
+  await clock.advance(60_000)
+  await runStep($ as never, 't2', 0)
+  await clock.advance(5_000)
+  const a = JSON.parse(files.get('/mnt/c/Users/Tarun/AppData/Local/Softhalo/usage/claude/claude-s1.a.json') ?? '{}')
+  // Only the turn after the drive was found; the one before it was never seen.
+  expect(a.buckets[0].requests).toBe(1)
+  expect(lines.length).toBe(1)
 })
 
 test('inside WSL with several Soft Halo users and none matching, the line names the cause', async ($, on) => {
