@@ -1,6 +1,12 @@
 # Soft Halo Usage
 
+[![Listed on ClaudePluginHub](https://www.claudepluginhub.com/badge/ahujat-softhalo-usage)](https://www.claudepluginhub.com/plugins/ahujat-softhalo-usage?ref=badge)
+
 **Keeps your Claude Code quota and token usage always on screen.** This plugin records usage numbers to a local folder. The Soft Halo desktop app shows them in its always-on-top overlay, so you can check your 5-hour and weekly limits at a glance instead of typing `/usage`.
+
+![Soft Halo overlay: Claude 5-hour and weekly limits and Codex weekly limit, each with usage and time left, and today's tokens for Claude, Codex and Hermes](docs/overlay.png)
+
+*Soft Halo's overlay stays on top of other windows; you can resize it and set how transparent it is.*
 
 ## Requirements
 
