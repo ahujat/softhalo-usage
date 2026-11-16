@@ -80,6 +80,10 @@ Then install [Soft Halo for Windows 2.0.5.22 or later](https://softhalo.app/down
 
 The file format is `softhalo.claude-snapshot/3`. Soft Halo's collector tests read this plugin's real output (`tests/make-fixture.ts`), so a change to the format fails there first.
 
+## Changes
+
+See [CHANGELOG.md](CHANGELOG.md).
+
 ## Privacy
 
 See [PRIVACY.md](PRIVACY.md).

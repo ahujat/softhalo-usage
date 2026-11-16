@@ -4,6 +4,8 @@
   "version": "1.1.0",
   "description": "Keeps your Claude Code quota and token usage always on screen: records usage numbers to a local folder for the Soft Halo desktop app.",
   "author": { "name": "Soft Halo" },
+  "homepage": "https://softhalo.app",
+  "repository": "https://github.com/ahujat/softhalo-usage",
   "license": "MIT",
   "icon": "./.claude-plugin/icon.png",
   "keywords": ["usage", "tokens", "quota", "rate-limits", "softhalo"]
